@@ -2,17 +2,57 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ApidogClient } from "../client.js";
 import { authSchema, parametersSchema, processorsSchema, requestBodySchema } from "../schemas.js";
-import { errorResultFrom, jsonResult } from "../types.js";
+import { compactJsonResult, errorResultFrom, jsonResult } from "../types.js";
+
+interface RawScenario {
+	id: number;
+	name: string;
+	folderId: number;
+	priority?: number;
+	tags?: string[];
+	description?: string;
+	ordering?: number;
+	status?: string;
+	[key: string]: unknown;
+}
+
+interface RawFolder {
+	id: number;
+	name: string;
+	parentId?: number;
+	[key: string]: unknown;
+}
+
+interface TreeListResponse {
+	testScenarios?: RawScenario[];
+	testScenarioFolders?: RawFolder[];
+	[key: string]: unknown;
+}
+
+const SCENARIO_FIELDS = ["id", "name", "folderId", "priority", "tags", "description", "ordering", "status"] as const;
+const FOLDER_FIELDS = ["id", "name", "parentId"] as const;
+
+function pick<T extends Record<string, unknown>>(obj: T, fields: readonly string[]): Partial<T> {
+	const result: Record<string, unknown> = {};
+	for (const f of fields) {
+		if (f in obj) result[f] = obj[f];
+	}
+	return result as Partial<T>;
+}
 
 export function registerTestScenarioTools(server: McpServer, client: ApidogClient): void {
 	server.tool(
 		"list_test_scenarios",
-		"List all test scenarios with folder tree structure. Returns testScenarios and testScenarioFolders.",
+		"List all test scenarios (compact summary: id, name, folderId, priority, tags, description, ordering, status). Use get_test_scenario_steps for full details.",
 		{},
 		async () => {
 			try {
-				const data = await client.get(`/projects/${client.project}/test-scenario/tree-list`);
-				return jsonResult(data);
+				const data = await client.get<TreeListResponse>(`/projects/${client.project}/test-scenario/tree-list`);
+				const compact = {
+					testScenarios: (data.testScenarios ?? []).map((s) => pick(s, SCENARIO_FIELDS)),
+					testScenarioFolders: (data.testScenarioFolders ?? []).map((f) => pick(f, FOLDER_FIELDS)),
+				};
+				return compactJsonResult(compact);
 			} catch (error) {
 				return errorResultFrom("Failed to list test scenarios", error);
 			}

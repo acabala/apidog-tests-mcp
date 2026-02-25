@@ -25,6 +25,12 @@ export function jsonResult(data: unknown): McpToolResult {
 	};
 }
 
+export function compactJsonResult(data: unknown): McpToolResult {
+	return {
+		content: [{ type: "text" as const, text: JSON.stringify(data) }],
+	};
+}
+
 export function errorResult(message: string): McpToolResult {
 	return {
 		content: [{ type: "text" as const, text: message }],

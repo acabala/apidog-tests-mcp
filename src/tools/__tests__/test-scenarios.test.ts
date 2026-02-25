@@ -35,6 +35,59 @@ describe("test-scenarios tools", () => {
 			expect(mockClient.get).toHaveBeenCalledWith("/projects/TEST_PROJECT/test-scenario/tree-list");
 		});
 
+		it("returns only essential fields in compact JSON", async () => {
+			mockClient.get.mockResolvedValueOnce({
+				testScenarios: [
+					{
+						id: 1,
+						name: "Login Flow",
+						folderId: 10,
+						priority: 1,
+						tags: ["smoke"],
+						description: "Test login",
+						ordering: 0,
+						status: "active",
+						options: { threadCount: 5, iterationCount: 10, delayItem: 100 },
+						createdAt: "2025-01-01",
+						updatedAt: "2025-01-02",
+						createdBy: { id: 999, name: "User" },
+						extraField: "should be stripped",
+					},
+				],
+				testScenarioFolders: [
+					{
+						id: 10,
+						name: "Auth",
+						parentId: 0,
+						createdAt: "2025-01-01",
+						extraField: "should be stripped",
+					},
+				],
+			});
+
+			const result = (await getHandler("list_test_scenarios")({})) as {
+				content: Array<{ text: string }>;
+			};
+			const parsed = JSON.parse(result.content[0].text);
+
+			expect(parsed.testScenarios).toEqual([
+				{
+					id: 1,
+					name: "Login Flow",
+					folderId: 10,
+					priority: 1,
+					tags: ["smoke"],
+					description: "Test login",
+					ordering: 0,
+					status: "active",
+				},
+			]);
+			expect(parsed.testScenarioFolders).toEqual([{ id: 10, name: "Auth", parentId: 0 }]);
+			expect(result.content[0].text).not.toContain("extraField");
+			expect(result.content[0].text).not.toContain("options");
+			expect(result.content[0].text).not.toContain("\n");
+		});
+
 		it("returns error result on failure", async () => {
 			mockClient.get.mockRejectedValueOnce(new Error("fail"));
 

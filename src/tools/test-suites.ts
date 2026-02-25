@@ -1,7 +1,43 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { ApidogClient } from "../client.js";
-import { errorResultFrom, jsonResult } from "../types.js";
+import { compactJsonResult, errorResultFrom, jsonResult } from "../types.js";
+
+interface RawSuite {
+	id: number;
+	name: string;
+	folderId?: number;
+	priority?: number;
+	tags?: string[];
+	description?: string;
+	ordering?: number;
+	status?: string;
+	[key: string]: unknown;
+}
+
+interface RawSuiteFolder {
+	id: number;
+	name: string;
+	parentId?: number;
+	[key: string]: unknown;
+}
+
+interface SuiteTreeListResponse {
+	testSuites?: RawSuite[];
+	testSuiteFolders?: RawSuiteFolder[];
+	[key: string]: unknown;
+}
+
+const SUITE_FIELDS = ["id", "name", "folderId", "priority", "tags", "description", "ordering", "status"] as const;
+const SUITE_FOLDER_FIELDS = ["id", "name", "parentId"] as const;
+
+function pick<T extends Record<string, unknown>>(obj: T, fields: readonly string[]): Partial<T> {
+	const result: Record<string, unknown> = {};
+	for (const f of fields) {
+		if (f in obj) result[f] = obj[f];
+	}
+	return result as Partial<T>;
+}
 
 interface SuiteItemStatic {
 	type: "STATIC_TEST_CASE" | "STATIC_TEST_SCENARIO";
@@ -57,12 +93,18 @@ function buildStructuredItem(item: SuiteItemInput) {
 export function registerTestSuiteTools(server: McpServer, client: ApidogClient): void {
 	server.tool(
 		"list_test_suites",
-		"List all test suites with folder tree structure. Returns suite names, IDs, priorities, tags, and folder organization.",
+		"List all test suites (compact summary: id, name, folderId, priority, tags, description, ordering, status). Use get_test_suite for full details.",
 		{},
 		async () => {
 			try {
-				const data = await client.get(`/projects/${client.project}/api-test/test-suite-tree-list`);
-				return jsonResult(data);
+				const data = await client.get<SuiteTreeListResponse>(
+					`/projects/${client.project}/api-test/test-suite-tree-list`,
+				);
+				const compact = {
+					testSuites: (data.testSuites ?? []).map((s) => pick(s, SUITE_FIELDS)),
+					testSuiteFolders: (data.testSuiteFolders ?? []).map((f) => pick(f, SUITE_FOLDER_FIELDS)),
+				};
+				return compactJsonResult(compact);
 			} catch (error) {
 				return errorResultFrom("Failed to list test suites", error);
 			}

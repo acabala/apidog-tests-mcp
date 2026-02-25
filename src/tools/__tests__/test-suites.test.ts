@@ -28,11 +28,61 @@ describe("test-suites tools", () => {
 
 	describe("list_test_suites", () => {
 		it("calls the correct API path", async () => {
-			mockClient.get.mockResolvedValueOnce([]);
+			mockClient.get.mockResolvedValueOnce({ testSuites: [], testSuiteFolders: [] });
 
 			await getHandler("list_test_suites")({});
 
 			expect(mockClient.get).toHaveBeenCalledWith("/projects/TEST_PROJECT/api-test/test-suite-tree-list");
+		});
+
+		it("returns only essential fields in compact JSON", async () => {
+			mockClient.get.mockResolvedValueOnce({
+				testSuites: [
+					{
+						id: 1,
+						name: "Smoke Suite",
+						folderId: 5,
+						priority: 1,
+						tags: ["smoke"],
+						description: "Smoke tests",
+						ordering: 0,
+						status: "active",
+						options: { runnerId: 0, environmentId: 123 },
+						createdAt: "2025-01-01",
+						items: [{ id: "uuid", type: "STATIC_TEST_CASE" }],
+					},
+				],
+				testSuiteFolders: [
+					{
+						id: 5,
+						name: "CI",
+						parentId: 0,
+						createdAt: "2025-01-01",
+						extraField: "stripped",
+					},
+				],
+			});
+
+			const result = (await getHandler("list_test_suites")({})) as {
+				content: Array<{ text: string }>;
+			};
+			const parsed = JSON.parse(result.content[0].text);
+
+			expect(parsed.testSuites).toEqual([
+				{
+					id: 1,
+					name: "Smoke Suite",
+					folderId: 5,
+					priority: 1,
+					tags: ["smoke"],
+					description: "Smoke tests",
+					ordering: 0,
+					status: "active",
+				},
+			]);
+			expect(parsed.testSuiteFolders).toEqual([{ id: 5, name: "CI", parentId: 0 }]);
+			expect(result.content[0].text).not.toContain("extraField");
+			expect(result.content[0].text).not.toContain("\n");
 		});
 
 		it("returns error result on failure", async () => {
