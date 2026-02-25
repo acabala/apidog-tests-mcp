@@ -23,13 +23,13 @@ MCP (Model Context Protocol) server for managing Apidog test cases, scenarios, s
 ## Installation
 
 ```bash
-npm install -g apidog-tests-mcp
+npm install -g @acabala/apidog-tests-mcp
 ```
 
 Or use directly with npx:
 
 ```bash
-npx apidog-tests-mcp
+npx @acabala/apidog-tests-mcp
 ```
 
 ## Configuration
@@ -53,7 +53,7 @@ Add to your MCP client config (e.g. Claude Desktop `claude_desktop_config.json`)
 	"mcpServers": {
 		"apidog-tests": {
 			"command": "npx",
-			"args": ["apidog-tests-mcp"],
+			"args": ["@acabala/apidog-tests-mcp"],
 			"env": {
 				"APIDOG_ACCESS_TOKEN": "your-token",
 				"APIDOG_PROJECT_ID": "your-project-id",

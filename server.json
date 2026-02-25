@@ -1,0 +1,57 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.acabala/apidog-tests-mcp",
+	"description": "MCP server for managing Apidog test cases, scenarios, suites, and test data",
+	"repository": {
+		"url": "https://github.com/acabala/apidog-tests-mcp",
+		"source": "github"
+	},
+	"version": "0.0.2",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "@acabala/apidog-tests-mcp",
+			"version": "0.0.2",
+			"transport": {
+				"type": "stdio"
+			},
+			"environmentVariables": [
+				{
+					"name": "APIDOG_ACCESS_TOKEN",
+					"description": "Apidog API access token for authentication",
+					"isRequired": true,
+					"isSecret": true,
+					"format": "string"
+				},
+				{
+					"name": "APIDOG_PROJECT_ID",
+					"description": "Apidog project ID to operate on",
+					"isRequired": true,
+					"isSecret": false,
+					"format": "string"
+				},
+				{
+					"name": "APIDOG_BRANCH_ID",
+					"description": "Apidog branch ID within the project",
+					"isRequired": true,
+					"isSecret": false,
+					"format": "string"
+				},
+				{
+					"name": "APIDOG_DEVICE_ID",
+					"description": "Apidog device ID for client identification",
+					"isRequired": true,
+					"isSecret": false,
+					"format": "string"
+				},
+				{
+					"name": "APIDOG_BASE_URL",
+					"description": "Apidog API base URL (defaults to https://api.apidog.com/api/v1)",
+					"isRequired": false,
+					"isSecret": false,
+					"format": "string"
+				}
+			]
+		}
+	]
+}

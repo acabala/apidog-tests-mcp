@@ -1,6 +1,7 @@
 node_modules
 dist
 coverage
+server.json
 CLAUDE.md
 EXTRACTED-API-DATA.md
 APIDOG-API-REFERENCE.md
