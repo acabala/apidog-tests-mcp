@@ -28,37 +28,108 @@ describe("test-cases tools", () => {
 	});
 
 	describe("list_test_cases", () => {
-		it("lists all test cases", async () => {
-			const cases = [
-				{ id: 1, name: "TC1", apiDetailId: 100 },
-				{ id: 2, name: "TC2", apiDetailId: 200 },
-			];
-			mockClient.get.mockResolvedValueOnce(cases);
+		it("calls the correct API path with field filter", async () => {
+			mockClient.get.mockResolvedValueOnce([]);
 
-			const result = (await getHandler("list_test_cases")({})) as { content: Array<{ text: string }> };
-			const parsed = JSON.parse(result.content[0].text);
+			await getHandler("list_test_cases")({});
 
-			expect(parsed).toHaveLength(2);
 			expect(mockClient.get).toHaveBeenCalledWith(
 				"/projects/TEST_PROJECT/test-cases",
 				expect.objectContaining({ fields: expect.any(String) }),
 			);
 		});
 
-		it("filters by endpointId", async () => {
+		it("does not request moduleId or projectId fields", async () => {
+			mockClient.get.mockResolvedValueOnce([]);
+
+			await getHandler("list_test_cases")({});
+
+			const calledFields = (mockClient.get.mock.calls[0][1] as Record<string, string>).fields;
+			expect(calledFields).not.toContain("moduleId");
+			expect(calledFields).not.toContain("projectId");
+		});
+
+		it("returns paginated envelope with total, page, pageSize, pages and items", async () => {
 			const cases = [
 				{ id: 1, name: "TC1", apiDetailId: 100 },
 				{ id: 2, name: "TC2", apiDetailId: 200 },
 			];
 			mockClient.get.mockResolvedValueOnce(cases);
 
-			const result = (await getHandler("list_test_cases")({ endpointId: 200 })) as {
+			const result = (await getHandler("list_test_cases")({ page: 1, pageSize: 100 })) as {
 				content: Array<{ text: string }>;
 			};
 			const parsed = JSON.parse(result.content[0].text);
 
-			expect(parsed).toHaveLength(1);
-			expect(parsed[0].id).toBe(2);
+			expect(parsed).toMatchObject({
+				total: 2,
+				page: 1,
+				pageSize: 100,
+				pages: 1,
+				items: cases,
+			});
+		});
+
+		it("returns compact JSON (no newlines)", async () => {
+			mockClient.get.mockResolvedValueOnce([{ id: 1, name: "TC1" }]);
+
+			const result = (await getHandler("list_test_cases")({})) as { content: Array<{ text: string }> };
+
+			expect(result.content[0].text).not.toContain("\n");
+		});
+
+		it("paginates correctly — page 2 with pageSize 2", async () => {
+			const cases = [
+				{ id: 1, name: "TC1", apiDetailId: 100 },
+				{ id: 2, name: "TC2", apiDetailId: 200 },
+				{ id: 3, name: "TC3", apiDetailId: 300 },
+				{ id: 4, name: "TC4", apiDetailId: 400 },
+				{ id: 5, name: "TC5", apiDetailId: 500 },
+			];
+			mockClient.get.mockResolvedValueOnce(cases);
+
+			const result = (await getHandler("list_test_cases")({ page: 2, pageSize: 2 })) as {
+				content: Array<{ text: string }>;
+			};
+			const parsed = JSON.parse(result.content[0].text);
+
+			expect(parsed.total).toBe(5);
+			expect(parsed.page).toBe(2);
+			expect(parsed.pageSize).toBe(2);
+			expect(parsed.pages).toBe(3);
+			expect(parsed.items).toHaveLength(2);
+			expect(parsed.items[0].id).toBe(3);
+			expect(parsed.items[1].id).toBe(4);
+		});
+
+		it("returns empty items array when page is beyond total", async () => {
+			mockClient.get.mockResolvedValueOnce([{ id: 1 }, { id: 2 }]);
+
+			const result = (await getHandler("list_test_cases")({ page: 99, pageSize: 100 })) as {
+				content: Array<{ text: string }>;
+			};
+			const parsed = JSON.parse(result.content[0].text);
+
+			expect(parsed.items).toHaveLength(0);
+			expect(parsed.total).toBe(2);
+		});
+
+		it("filters by endpointId before paginating", async () => {
+			const cases = [
+				{ id: 1, name: "TC1", apiDetailId: 100 },
+				{ id: 2, name: "TC2", apiDetailId: 200 },
+				{ id: 3, name: "TC3", apiDetailId: 200 },
+			];
+			mockClient.get.mockResolvedValueOnce(cases);
+
+			const result = (await getHandler("list_test_cases")({ endpointId: 200, page: 1, pageSize: 100 })) as {
+				content: Array<{ text: string }>;
+			};
+			const parsed = JSON.parse(result.content[0].text);
+
+			expect(parsed.total).toBe(2);
+			expect(parsed.items).toHaveLength(2);
+			expect(parsed.items.every((tc: { apiDetailId: number }) => tc.apiDetailId === 200)).toBe(true);
 		});
 
 		it("returns error result on failure", async () => {

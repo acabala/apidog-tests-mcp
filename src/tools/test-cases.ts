@@ -9,31 +9,48 @@ import {
 	processorsSchema,
 	requestBodySchema,
 } from "../schemas.js";
-import { errorResultFrom, jsonResult } from "../types.js";
+import { compactJsonResult, errorResultFrom, jsonResult } from "../types.js";
 
 interface TestCase {
 	apiDetailId?: number;
+	id?: number;
+	name?: unknown;
 	[key: string]: unknown;
 }
 
 export function registerTestCaseTools(server: McpServer, client: ApidogClient): void {
 	server.tool(
 		"list_test_cases",
-		"List all test cases. Optionally filter by endpoint (apiDetailId). Returns id, name, type, apiDetailId, categoryId, tagIds.",
+		"List test cases (id, name, type, apiDetailId, categoryId, tagIds). Supports filtering by endpoint and pagination. Use get_test_case for full details of a single case.",
 		{
 			endpointId: z.coerce.number().optional().describe("Filter by API endpoint ID (apiDetailId)"),
+			page: z.coerce.number().int().min(1).default(1).describe("Page number (1-based)"),
+			pageSize: z.coerce.number().int().min(1).max(200).default(100).describe("Results per page (max 200)"),
 		},
-		async ({ endpointId }) => {
+		async ({ endpointId, page, pageSize }) => {
 			try {
+				const currentPage = page ?? 1;
+				const currentPageSize = pageSize ?? 100;
 				const params: Record<string, string> = {
-					fields: "id,name,type,apiDetailId,moduleId,projectId,categoryId,tagIds",
+					fields: "id,name,type,apiDetailId,categoryId,tagIds",
 				};
-				const data = await client.get<TestCase[]>(`/projects/${client.project}/test-cases`, params);
+				let data = await client.get<TestCase[]>(`/projects/${client.project}/test-cases`, params);
 
 				if (endpointId !== undefined) {
-					return jsonResult(data.filter((tc) => tc.apiDetailId === endpointId));
+					data = data.filter((tc) => tc.apiDetailId === endpointId);
 				}
-				return jsonResult(data);
+
+				const total = data.length;
+				const start = (currentPage - 1) * currentPageSize;
+				const items = data.slice(start, start + currentPageSize);
+
+				return compactJsonResult({
+					total,
+					page: currentPage,
+					pageSize: currentPageSize,
+					pages: Math.ceil(total / currentPageSize),
+					items,
+				});
 			} catch (error) {
 				return errorResultFrom("Failed to list test cases", error);
 			}
