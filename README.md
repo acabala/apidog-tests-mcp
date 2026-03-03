@@ -41,7 +41,6 @@ The server requires these environment variables:
 | `APIDOG_ACCESS_TOKEN` | Yes      | Your Apidog access token                                             |
 | `APIDOG_PROJECT_ID`   | Yes      | The Apidog project ID                                                |
 | `APIDOG_BRANCH_ID`    | Yes      | The branch ID to work with                                           |
-| `APIDOG_DEVICE_ID`    | Yes      | Device identifier for API requests                                   |
 | `APIDOG_BASE_URL`     | No       | Override the API base URL (default: `https://api.apidog.com/api/v1`) |
 
 ### MCP Client Configuration
@@ -57,8 +56,7 @@ Add to your MCP client config (e.g. Claude Desktop `claude_desktop_config.json`)
 			"env": {
 				"APIDOG_ACCESS_TOKEN": "your-token",
 				"APIDOG_PROJECT_ID": "your-project-id",
-				"APIDOG_BRANCH_ID": "your-branch-id",
-				"APIDOG_DEVICE_ID": "your-device-id"
+				"APIDOG_BRANCH_ID": "your-branch-id"
 			}
 		}
 	}
