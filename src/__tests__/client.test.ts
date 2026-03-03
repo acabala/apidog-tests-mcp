@@ -10,7 +10,6 @@ function makeClient(overrides?: Partial<ConstructorParameters<typeof ApidogClien
 		accessToken: "test-token",
 		projectId: "12345",
 		branchId: "main",
-		deviceId: "device-1",
 		...overrides,
 	});
 }
@@ -61,7 +60,6 @@ describe("ApidogClient", () => {
 			process.env.APIDOG_ACCESS_TOKEN = "env-token";
 			process.env.APIDOG_PROJECT_ID = "env-project";
 			process.env.APIDOG_BRANCH_ID = "env-branch";
-			process.env.APIDOG_DEVICE_ID = "env-device";
 
 			try {
 				const client = ApidogClient.fromEnv();
@@ -76,7 +74,6 @@ describe("ApidogClient", () => {
 			process.env.APIDOG_ACCESS_TOKEN = undefined;
 			process.env.APIDOG_PROJECT_ID = undefined;
 			process.env.APIDOG_BRANCH_ID = undefined;
-			process.env.APIDOG_DEVICE_ID = undefined;
 
 			try {
 				expect(() => ApidogClient.fromEnv()).toThrow(ApidogConfigError);
@@ -121,7 +118,7 @@ describe("ApidogClient", () => {
 			expect(headers.Authorization).toBe("Bearer test-token");
 			expect(headers["x-project-id"]).toBe("12345");
 			expect(headers["x-branch-id"]).toBe("main");
-			expect(headers["x-device-id"]).toBe("device-1");
+			expect(headers["x-device-id"]).toBe("@acabala/apidog-tests-mcp");
 			expect(headers["Content-Type"]).toBe("application/json");
 		});
 	});

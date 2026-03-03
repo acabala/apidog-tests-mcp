@@ -6,12 +6,12 @@
 		"url": "https://github.com/acabala/apidog-tests-mcp",
 		"source": "github"
 	},
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "@acabala/apidog-tests-mcp",
-			"version": "0.0.4",
+			"version": "0.0.5",
 			"transport": {
 				"type": "stdio"
 			},
@@ -33,13 +33,6 @@
 				{
 					"name": "APIDOG_BRANCH_ID",
 					"description": "Apidog branch ID within the project",
-					"isRequired": true,
-					"isSecret": false,
-					"format": "string"
-				},
-				{
-					"name": "APIDOG_DEVICE_ID",
-					"description": "Apidog device ID for client identification",
 					"isRequired": true,
 					"isSecret": false,
 					"format": "string"

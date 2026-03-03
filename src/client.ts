@@ -7,14 +7,12 @@ export class ApidogClient {
 	private readonly accessToken: string;
 	private readonly projectId: string;
 	private readonly branchId: string;
-	private readonly deviceId: string;
 	private readonly baseUrl: string;
 
 	constructor(config: ApidogClientConfig) {
 		this.accessToken = config.accessToken;
 		this.projectId = config.projectId;
 		this.branchId = config.branchId;
-		this.deviceId = config.deviceId;
 		this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
 	}
 
@@ -23,7 +21,6 @@ export class ApidogClient {
 			accessToken: requireEnv("APIDOG_ACCESS_TOKEN"),
 			projectId: requireEnv("APIDOG_PROJECT_ID"),
 			branchId: requireEnv("APIDOG_BRANCH_ID"),
-			deviceId: requireEnv("APIDOG_DEVICE_ID"),
 			baseUrl: process.env.APIDOG_BASE_URL,
 		});
 	}
@@ -39,7 +36,7 @@ export class ApidogClient {
 			"x-branch-id": this.branchId,
 			"x-client-mode": "web",
 			"x-client-version": "2.8.9",
-			"x-device-id": this.deviceId,
+			"x-device-id": "@acabala/apidog-tests-mcp",
 			"Content-Type": "application/json",
 			Accept: "application/json",
 		};

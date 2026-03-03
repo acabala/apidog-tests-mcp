@@ -4,7 +4,6 @@ export interface ApidogClientConfig {
 	accessToken: string;
 	projectId: string;
 	branchId: string;
-	deviceId: string;
 	baseUrl?: string;
 }
 
