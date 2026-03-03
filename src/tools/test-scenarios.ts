@@ -134,7 +134,7 @@ export function registerTestScenarioTools(server: McpServer, client: ApidogClien
 
 	server.tool(
 		"update_test_scenario_steps",
-		"Set or update the steps in a test scenario. Each step references an API endpoint via bindId (apiDetailId). Steps are fully replaced — pass the complete steps array.",
+		"Set or update the steps in a test scenario. Each step references an API endpoint via bindId (apiDetailId). Steps are fully replaced — pass the complete steps array. Supports 'http' steps (regular API calls) and 'if' conditional blocks (which have children instead of httpApiCase).",
 		{
 			scenarioId: z.coerce.number().describe("The test scenario ID"),
 			steps: z
@@ -144,10 +144,15 @@ export function registerTestScenarioTools(server: McpServer, client: ApidogClien
 						type: z.string().default("http").describe("Step type (usually 'http')"),
 						disable: z.boolean().default(false),
 						parameters: z.record(z.unknown()).default({}),
-						name: z.string().describe("Step name (e.g. API endpoint name)"),
-						bindId: z.coerce.number().describe("API endpoint ID (apiDetailId)"),
+						name: z.string().optional().describe("Step name (e.g. API endpoint name)"),
+						bindId: z.coerce.number().optional().describe("API endpoint ID (apiDetailId)"),
 						bindType: z.string().default("API"),
 						syncMode: z.string().default("MANUAL"),
+						isOpen: z.boolean().optional().describe("Whether the block is expanded in the UI (used by 'if' blocks)"),
+						children: z
+							.array(z.record(z.unknown()))
+							.optional()
+							.describe("Child steps for 'if' conditional blocks — pass child step objects as-is"),
 						httpApiCase: z
 							.object({
 								type: z.string().default("DEBUG_CASE"),
@@ -165,6 +170,7 @@ export function registerTestScenarioTools(server: McpServer, client: ApidogClien
 								preProcessors: processorsSchema,
 								postProcessors: processorsSchema,
 							})
+							.optional()
 							.describe("Full HTTP request configuration for this step"),
 					}),
 				)
